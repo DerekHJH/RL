@@ -12,7 +12,7 @@ def plot(record):
 	plt.figure()
 	fig, ax = plt.subplots()
 	ax.plot(record['steps'], record['mean'],
-	        color='blue', label='reward')
+		      color='blue', label='reward')
 	ax.fill_between(record['steps'], record['min'], record['max'],
 	                color='blue', alpha=0.2)
 	ax.set_xlabel('number of steps')
@@ -80,12 +80,13 @@ def main():
 	# agent initial
 	# you should finish your agent with DaggerAgent
 	# e.g. agent = MyDaggerAgent()
-	agent = ExampleAgent()
+	agent = DaggerAgent()
 
 	# You can play this game yourself for fun
 	if args.play_game:
 		obs = envs.reset()
 		while True:
+			envs.env.render()
 			im = Image.fromarray(obs)
 			im.save('imgs/' + str('screen') + '.jpeg')
 			action = int(input('input action'))
@@ -95,6 +96,7 @@ def main():
 			obs = obs_next
 			if done:
 				obs = envs.reset()
+                
 
 	data_set = {'data': [], 'label': []}
 	# start train your agent
@@ -112,12 +114,11 @@ def main():
 			else:
 				# we choose a special action according to our model
 				action = agent.select_action(obs)
-
 			# interact with the environment
 			# we input the action to the environments and it returns some information
 			# obs_next: the next observation after we do the action
 			# reward: (float) the reward achieved by the action
-			# down: (boolean)  whether it’s time to reset the environment again.
+			# done: (boolean)  whether it’s time to reset the environment again.
 			#           done being True indicates the episode has terminated.
 			obs_next, reward, done, _ = envs.step(action)
 			# we view the new observation as current observation
@@ -129,14 +130,14 @@ def main():
 			# an example of saving observations
 			if args.save_img:
 				im = Image.fromarray(obs)
-				im.save('imgs/' + str(step) + '.jpeg')
+				im.save('./imgs/' + str(step) + '.jpeg')
 			data_set['data'].append(obs)
 
 		# You need to label the images in 'imgs/' by recording the right actions in label.txt
 
 		# After you have labeled all the images, you can load the labels
 		# for training a model
-		with open('/imgs/label.txt', 'r') as f:
+		with open('./imgs/label.txt', 'r') as f:
 			for label_tmp in f.readlines():
 				data_set['label'].append(label_tmp)
 
