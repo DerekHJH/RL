@@ -1,5 +1,5 @@
 from arguments import get_args
-from Dagger import DaggerAgent, ExampleAgent, MyDaggerAgent
+from Dagger import DaggerAgent, ExampleAgent, MyDaggerAgent, MyData
 import numpy as np
 import time
 import gym
@@ -9,7 +9,7 @@ from PIL import Image
 import random
 import os
 import torch
-from torchvision import datasets 
+from torchvision import datasets, transforms
 
 def seed_everything(seed):
     random.seed(seed)
@@ -119,11 +119,10 @@ def main():
 				obs = envs.reset()
                 
 
-	data_set = {'data': [], 'label': []}
-	train_data = datasets.ImageFolder(root = './imgs')
+	data_set = MyData()
+	train_data = datasets.ImageFolder(root = './imgs', transform = transforms.Compose([transforms.ToTensor()]))
 	for data, label in train_data:
-		data_set['data'].append(data)
-		data_set['label'].append(label)
+		data_set.append(data, label)
 	# start train your agent
 	for i in range(num_updates):
 		# an example of interacting with the environment
@@ -146,7 +145,8 @@ def main():
 # 				im.save('./imgs/' + str(label) + '/' + now + '.jpeg')
 			else:
 				# we choose a special action according to our model
-				action = agent.select_action(obs)
+				label = agent.select_action(obs)
+				action = label2Action[label]
 			
 			# interact with the environment
 			# we input the action to the environments and it returns some information
@@ -160,13 +160,14 @@ def main():
 			# if the episode has terminated, we need to reset the environment.
 			if done:
 				envs.reset()
-
-			data_set['data'].append(obs)
-			data_set['label'].append(label)
-
+			
+			data = torch.Tensor(obs)
+			data = data.permute(2, 0, 1)
+			data_set.append(data, label)
+			
 		# design how to train your model with labeled data
-		agent.update(data_set['data'], data_set['label'])
-
+		agent.update(data_set)
+		
 		if (i + 1) % args.log_interval == 0:
 			total_num_steps = (i + 1) * args.num_steps
 			obs = envs.reset()
@@ -174,7 +175,8 @@ def main():
 			reward_episode = 0
 			# evaluate your model by testing in the environment
 			for step in range(args.test_steps):
-				action = agent.select_action(obs)
+				label = agent.select_action(obs)
+				action = label2Action[label]
 				# you can render to get visual results
 				# envs.render()
 				obs_next, reward, done, _ = envs.step(action)
