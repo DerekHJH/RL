@@ -145,6 +145,8 @@ def main():
 # 				im.save('./imgs/' + str(label) + '/' + now + '.jpeg')
 			else:
 				# we choose a special action according to our model
+				print('model playing:')
+				envs.env.render()
 				label = agent.select_action(obs)
 				action = label2Action[label]
 			

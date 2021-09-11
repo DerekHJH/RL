@@ -78,7 +78,7 @@ class Model(object):
 	def __init__(self, h, w, outputs):
 		self.lr = 3e-5
 		self.metric_name = "Accuracy"
-		self.epochs = 1
+		self.epochs = 10
 		self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 		
 		self.model = NN(h, w, outputs).to(self.device)
@@ -115,7 +115,7 @@ class Model(object):
 	
 	def train(self, data_set):
 		dfhistory = pd.DataFrame(columns = ["epoch", "loss", self.metric_name, "val_loss", "val_" + self.metric_name]) 
-		train_loader = DataLoader(data_set, batch_size = 16, shuffle = True, num_workers = 1)
+		train_loader = DataLoader(data_set, batch_size = 64, shuffle = True, num_workers = 1)
 		print("Start Training...")
 		for epoch in range(self.epochs): 
         # 1，training loop-------------------------------------------------
