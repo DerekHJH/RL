@@ -121,6 +121,7 @@ class MyDaggerAgent(DaggerAgent):
 		super(DaggerAgent, self).__init__()
 		# init your model
 		self.model = Model(210, 160, 8)
+		self.label2Action = {0:0, 1:1, 2:2, 3:3, 4:4, 5:5, 6:11, 7:12}
 
 	# train your model with labeled data
 	def update(self, data_batch, label_batch):
@@ -129,6 +130,6 @@ class MyDaggerAgent(DaggerAgent):
 	# select actions by your model
 	def select_action(self, data_batch):
 		label_predict = self.model.predict(data_batch)
-		return label_predict
+		return self.label2Action(label_predict)
 
 

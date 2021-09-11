@@ -6,6 +6,19 @@ import gym
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from PIL import Image
+import random
+import os
+import torch
+from torchvision import datasets 
+
+def seed_everything(seed):
+    random.seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
 
 
 def plot(record):
@@ -55,6 +68,7 @@ class Env(object):
 
 def main():
 	# load hyper parameters
+	seed_everything(42)
 	args = get_args()
 	num_updates = int(args.num_frames // args.num_steps)
 	start = time.time()
@@ -67,7 +81,7 @@ def main():
 	query_cnt = 0
 
 	human2Label = {0:0, 2:5, 4:4, 5:1, 6:3, 7:7, 8:2, 9:6}
-	label2Actoin = {0:0, 1:1, 2:2, 3:3, 4:4, 5:5, 6:11, 7:12}
+	label2Action = {0:0, 1:1, 2:2, 3:3, 4:4, 5:5, 6:11, 7:12}
 	# environment initial
 	envs = Env(args.env_name, args.num_stacks)
 	# action_shape is 18
@@ -88,12 +102,17 @@ def main():
 		obs = envs.reset()
 		while True:
 			envs.env.render()
+			human = input('input human action')
+			while str.isdigit(human) == False or int(human) not in human2Label.keys():
+				human = input('re-input human action')
+			human = int(human)
+			label = human2Label[human]
+			action = label2Action[label]
+					
+			now = time.strftime("%Y-%m-%d-%H_%M_%S",time.localtime(time.time())) 
 			im = Image.fromarray(obs)
-			im.save('./imgs/' + str('screen') + '.jpeg')
-			action = int(input('input action'))
-			while action not in humanActMap.keys():
-				action = int(input('re-input action'))
-			action = humanActMap(action)
+			im.save('./imgs/' + str(label) + '/' + now + '.jpeg')
+			
 			obs_next, reward, done, _ = envs.step(action)
 			obs = obs_next
 			if done:
@@ -101,6 +120,10 @@ def main():
                 
 
 	data_set = {'data': [], 'label': []}
+	train_data = datasets.ImageFolder(root = './imgs')
+	for data, label in train_data:
+		data_set['data'].append(data)
+		data_set['label'].append(label)
 	# start train your agent
 	for i in range(num_updates):
 		# an example of interacting with the environment
@@ -109,24 +132,21 @@ def main():
 		# we get a trajectory with the length of args.num_steps
 		for step in range(args.num_steps):
 			if i == 0:
-				envs.env.render()
-				human = int(input('input human action'))
-				while human not in human2Label.keys():
-					human = int(input('re-input human action'))
-				label = human2Label(human)
-				action = label2Action(label)
-				obs_next, reward, done, _ = envs.step(action)
-				obs = obs_next
-				if done:
-					obs = envs.reset()
-					
-				now = time.strftime("%Y-%m-%d-%H_%M_%S",time.localtime(time.time())) 
-				im = Image.fromarray(obs)
-				im.save('./imgs/' + str(label) + '/' + now + '.jpeg')
+				break
+# 				envs.env.render()
+# 				human = input('input human action')
+# 				while str.isdigit(human) == False or int(human) not in human2Label.keys():
+# 					human = input('re-input human action')
+# 				human = int(human)
+# 				label = human2Label[human]
+# 				action = label2Action[label]
+# 					
+# 				now = time.strftime("%Y-%m-%d-%H_%M_%S",time.localtime(time.time())) 
+# 				im = Image.fromarray(obs)
+# 				im.save('./imgs/' + str(label) + '/' + now + '.jpeg')
 			else:
 				# we choose a special action according to our model
-				label = agent.select_action(obs)
-				action = label2Action(label)
+				action = agent.select_action(obs)
 			
 			# interact with the environment
 			# we input the action to the environments and it returns some information
