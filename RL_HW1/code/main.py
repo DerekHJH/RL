@@ -66,6 +66,8 @@ def main():
 	# query_cnt counts queries to the expert
 	query_cnt = 0
 
+	human2Label = {0:0, 2:5, 4:4, 5:1, 6:3, 7:7, 8:2, 9:6}
+	label2Actoin = {0:0, 1:1, 2:2, 3:3, 4:4, 5:5, 6:11, 7:12}
 	# environment initial
 	envs = Env(args.env_name, args.num_stacks)
 	# action_shape is 18
@@ -89,8 +91,9 @@ def main():
 			im = Image.fromarray(obs)
 			im.save('./imgs/' + str('screen') + '.jpeg')
 			action = int(input('input action'))
-			while action < 0 or action >= action_shape:
+			while action not in humanActMap.keys():
 				action = int(input('re-input action'))
+			action = humanActMap(action)
 			obs_next, reward, done, _ = envs.step(action)
 			obs = obs_next
 			if done:
@@ -105,19 +108,26 @@ def main():
 		obs = envs.reset()
 		# we get a trajectory with the length of args.num_steps
 		for step in range(args.num_steps):
-			# Sample actions
-			epsilon = 0.05
-			if np.random.rand() < epsilon:
-				# we choose a random action
-				action = np.random.choice(list(range(8)), 1).item()
+			if i == 0:
+				envs.env.render()
+				human = int(input('input human action'))
+				while human not in human2Label.keys():
+					human = int(input('re-input human action'))
+				label = human2Label(human)
+				action = label2Action(label)
+				obs_next, reward, done, _ = envs.step(action)
+				obs = obs_next
+				if done:
+					obs = envs.reset()
+					
+				now = time.strftime("%Y-%m-%d-%H_%M_%S",time.localtime(time.time())) 
+				im = Image.fromarray(obs)
+				im.save('./imgs/' + str(label) + '/' + now + '.jpeg')
 			else:
 				# we choose a special action according to our model
-				action = agent.select_action(obs)
-				
-			if action == 6:
-				action = 11
-			elif action == 7:
-				action = 12
+				label = agent.select_action(obs)
+				action = label2Action(label)
+			
 			# interact with the environment
 			# we input the action to the environments and it returns some information
 			# obs_next: the next observation after we do the action
@@ -131,19 +141,8 @@ def main():
 			if done:
 				envs.reset()
 
-			# an example of saving observations
-			if args.save_img:
-				im = Image.fromarray(obs)
-				im.save('./imgs/' + str(step) + '.jpeg')
 			data_set['data'].append(obs)
-
-		# You need to label the images in 'imgs/' by recording the right actions in label.txt
-
-		# After you have labeled all the images, you can load the labels
-		# for training a model
-		with open('./imgs/label.txt', 'r') as f:
-			for label_tmp in f.readlines():
-				data_set['label'].append(int(label_tmp))
+			data_set['label'].append(label)
 
 		# design how to train your model with labeled data
 		agent.update(data_set['data'], data_set['label'])
@@ -188,3 +187,4 @@ def main():
 
 if __name__ == "__main__":
 	main()
+

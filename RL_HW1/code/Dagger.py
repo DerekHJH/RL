@@ -67,11 +67,11 @@ class Model(object):
 		self.metric_func = lambda y_pred, y_true: (y_pred.argmax(dim = 1) == y_true).float().mean()
 	
 	def predict(self, x):
-		x = torch.Tensor(x)
+		x = torch.tensor(x, dtype = torch.float)
 		x = x.unsqueeze(0)
 		x = x.permute(0, 3, 1, 2)
 		self.model.eval()
-		results = self.model(x).argmax(dim=1)
+		results = self.model(x).argmax(dim=1).item()
 		return results
 	
 	def trainStep(self, features, labels):
@@ -93,7 +93,7 @@ class Model(object):
 		return loss.item(), metric.item()
 	
 	def train(self, features, labels):
-		features = torch.tensor(features)
+		features = torch.tensor(features, dtype = torch.float)
 		print(features.shape)
 		features = features.permute(0, 3, 1, 2)
 		labels = torch.tensor(labels, dtype = torch.long)
@@ -130,4 +130,5 @@ class MyDaggerAgent(DaggerAgent):
 	def select_action(self, data_batch):
 		label_predict = self.model.predict(data_batch)
 		return label_predict
+
 
