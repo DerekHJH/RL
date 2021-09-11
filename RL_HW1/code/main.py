@@ -1,5 +1,5 @@
 from arguments import get_args
-from Dagger import DaggerAgent, ExampleAgent
+from Dagger import DaggerAgent, ExampleAgent, MyDaggerAgent
 import numpy as np
 import time
 import gym
@@ -68,19 +68,18 @@ def main():
 
 	# environment initial
 	envs = Env(args.env_name, args.num_stacks)
-	# action_shape is the size of the discrete action set, here is 18
+	# action_shape is 18
 	# Most of the 18 actions are useless, find important actions
 	# in the tips of the homework introduction document
 	action_shape = envs.action_space.n
 	# observation_shape is the shape of the observation
 	# here is (210,160,3)=(height, weight, channels)
 	observation_shape = envs.observation_space.shape
-	print(action_shape, observation_shape)
 
 	# agent initial
 	# you should finish your agent with DaggerAgent
 	# e.g. agent = MyDaggerAgent()
-	agent = DaggerAgent()
+	agent = MyDaggerAgent()
 
 	# You can play this game yourself for fun
 	if args.play_game:
@@ -88,7 +87,7 @@ def main():
 		while True:
 			envs.env.render()
 			im = Image.fromarray(obs)
-			im.save('imgs/' + str('screen') + '.jpeg')
+			im.save('./imgs/' + str('screen') + '.jpeg')
 			action = int(input('input action'))
 			while action < 0 or action >= action_shape:
 				action = int(input('re-input action'))
@@ -110,10 +109,15 @@ def main():
 			epsilon = 0.05
 			if np.random.rand() < epsilon:
 				# we choose a random action
-				action = envs.action_space.sample()
+				action = np.random.choice(list(range(8)), 1).item()
 			else:
 				# we choose a special action according to our model
 				action = agent.select_action(obs)
+				
+			if action == 6:
+				action = 11
+			elif action == 7:
+				action = 12
 			# interact with the environment
 			# we input the action to the environments and it returns some information
 			# obs_next: the next observation after we do the action
@@ -139,7 +143,7 @@ def main():
 		# for training a model
 		with open('./imgs/label.txt', 'r') as f:
 			for label_tmp in f.readlines():
-				data_set['label'].append(label_tmp)
+				data_set['label'].append(int(label_tmp))
 
 		# design how to train your model with labeled data
 		agent.update(data_set['data'], data_set['label'])

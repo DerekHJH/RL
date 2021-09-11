@@ -93,16 +93,16 @@ class Model(object):
 		return loss.item(), metric.item()
 	
 	def train(self, features, labels):
-		features = torch.Tensor(features)
-		features = features.unsqueeze(0)
+		features = torch.tensor(features)
+		print(features.shape)
 		features = features.permute(0, 3, 1, 2)
-		labels = torch.tensor(labels, dtype = torch.Long)
+		labels = torch.tensor(labels, dtype = torch.long)
 		
 		dfhistory = pd.DataFrame(columns = ["epoch", "loss", self.metricName, "valLoss", "val" + self.metricName]) 
 		print("Start Training...")
 		for epoch in range(self.epochs): 
-			loss, metric = self.train_step(features, labels)
-			valLoss, valMetric = self.valid_step(features, labels)
+			loss, metric = self.trainStep(features, labels)
+			valLoss, valMetric = self.validStep(features, labels)
 
 
 			info = (epoch, loss, metric, valLoss, valMetric)
@@ -116,7 +116,7 @@ class Model(object):
 
 		return dfhistory
 
-class DaggerAgent(DaggerAgent):
+class MyDaggerAgent(DaggerAgent):
 	def __init__(self, necessary_parameters=None):
 		super(DaggerAgent, self).__init__()
 		# init your model
